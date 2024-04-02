@@ -1,7 +1,7 @@
 const express = require("express");
 const cors = require("cors");
 const bcrypt = require("bcrypt");
-const { MongoClient } = require("mongodb");
+const { MongoClient, ObjectId } = require("mongodb");
 require("dotenv").config();
 const jwt = require("jsonwebtoken");
 
@@ -92,8 +92,7 @@ async function run() {
 
     app.get("/api/v1/products", async (req, res) => {
       const query = req.query || {};
-      console.log(query);
-
+     
       try {
         const result = await productCollection.find(query).toArray();
         res.status(200).send(result);
@@ -101,6 +100,23 @@ async function run() {
         res.status(500).send({ message: err.message });
       }
     });
+
+
+    app.get('/api/v1/products/:id', async (req, res) => {
+      const id = req.params.id;
+      try {
+        const result = await productCollection.findOne({ _id: new ObjectId(id) });
+        if (result) {
+          res.status(200).send(result);
+        } else {
+          res.status(404).send({ message: 'Product not exist' });
+        }
+      } catch (err) {
+        res.status(500).send({ message: err.message });
+      }
+    });
+    
+
     app.get("/api/v1/flashproduct", async (req, res) => {
       try {
         const result = await productCollection
@@ -113,10 +129,9 @@ async function run() {
     });
     app.get("/api/v1/topRatedProducts", async (req, res) => {
       try {
-       
         const result = await productCollection
           .find({})
-          .sort({ ratings: -1 }) 
+          .sort({ ratings: -1 })
           .limit(8)
           .toArray();
         res.status(200).send(result);
@@ -124,7 +139,6 @@ async function run() {
         res.status(500).send({ message: err.message });
       }
     });
-
 
     // Start the server
     app.listen(port, () => {
