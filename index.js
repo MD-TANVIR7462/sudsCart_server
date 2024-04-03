@@ -91,15 +91,28 @@ async function run() {
     });
 
     app.get("/api/v1/products", async (req, res) => {
-      const query = req.query || {};
-     
+      const query = req.query;
+    
+      const category = query.category;
+      const price = query.price;
+      const rating = query.rating;
+    
+ 
+      const filter = {};
+      if (category) filter.category = category;
+      // if (price) filter.price = parseFloat(price); 
+      // if (rating) filter.ratings = parseFloat(rating);
+    console.log(filter);
       try {
-        const result = await productCollection.find(query).toArray();
+        // Using the constructed filter object to query the database
+        const result = await productCollection.find(filter).toArray();
         res.status(200).send(result);
+        console.log(result);
       } catch (err) {
         res.status(500).send({ message: err.message });
       }
     });
+    
 
 
     app.get('/api/v1/products/:id', async (req, res) => {
