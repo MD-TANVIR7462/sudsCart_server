@@ -92,43 +92,48 @@ async function run() {
 
     app.get("/api/v1/products", async (req, res) => {
       const query = req.query;
-    
+
       const category = query.category;
       const price = query.price;
       const rating = query.rating;
-    
- 
+
       const filter = {};
       if (category) filter.category = category;
-      // if (price) filter.price = parseFloat(price); 
-      // if (rating) filter.ratings = parseFloat(rating);
-    console.log(filter);
+      if (price) {
+        const [minPrice, maxPrice] = price.split("-").map(parseFloat);
+        filter.price = { $gte: minPrice, $lte: maxPrice };
+      }
+      if (rating) {
+        const [minPrice, maxPrice] = rating.split("-").map(parseFloat);
+        filter.ratings = { $gte: minPrice, $lte: maxPrice };
+      }
+
       try {
-        // Using the constructed filter object to query the database
         const result = await productCollection.find(filter).toArray();
-        res.status(200).send(result);
-        console.log(result);
+        if (result.length > 0) {
+          return res.status(200).send(result);
+        }
+        res.send({ message: "No Product found" });
       } catch (err) {
         res.status(500).send({ message: err.message });
       }
     });
-    
 
-
-    app.get('/api/v1/products/:id', async (req, res) => {
+    app.get("/api/v1/products/:id", async (req, res) => {
       const id = req.params.id;
       try {
-        const result = await productCollection.findOne({ _id: new ObjectId(id) });
+        const result = await productCollection.findOne({
+          _id: new ObjectId(id),
+        });
         if (result) {
           res.status(200).send(result);
         } else {
-          res.status(404).send({ message: 'Product not exist' });
+          res.status(404).send({ message: "Product not exist" });
         }
       } catch (err) {
         res.status(500).send({ message: err.message });
       }
     });
-    
 
     app.get("/api/v1/flashproduct", async (req, res) => {
       try {
