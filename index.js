@@ -25,8 +25,8 @@ async function run() {
     await client.connect();
     console.log("Connected to MongoDB");
 
-    const db = client.db("assignment");
-    const collection = db.collection("users");
+    const db = client.db("sudsCarts");
+    // const collection = db.collection("users");
     const productCollection = db.collection("products");
 
     // // User Registration
