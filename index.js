@@ -30,55 +30,64 @@ async function run() {
     const productCollection = db.collection("products");
 
     // User Registration
-    app.post('/api/v1/register', async (req, res) => {
-        const { name, email, password } = req.body;
+    app.post("/api/v1/register", async (req, res) => {
+      const { name, email, password } = req.body;
 
-        // Check if email already exists
-        const existingUser = await userCollection.findOne({ email });
-        if (existingUser) {
-            return res.status(400).json({
-                success: false,
-                message: 'User already exists'
-            });
-        }
-
-        // Hash the password
-        const hashedPassword = await bcrypt.hash(password, 10);
-
-        // Insert user into the database
-       const data =  await userCollection.insertOne({ name, email, password: hashedPassword });
-
-        res.status(201).json({
-            success: true,
-            message: 'User registered successfully',
-            data : data 
+      // Check if email already exists
+      const existingUser = await userCollection.findOne({ email });
+      if (existingUser) {
+        return res.status(400).json({
+          success: false,
+          message: "User already exists",
         });
+      }
+
+      // Hash the password
+      const hashedPassword = await bcrypt.hash(password, 10);
+      const userData = { name, email, password: hashedPassword, role: "user" };
+      // Insert user into the database
+      const data = await userCollection.insertOne(userData);
+      const token = jwt.sign(
+        { email: userData.email, role: userData.role },
+        process.env.JWT_SECRET,
+        { expiresIn: process.env.EXPIRES_IN }
+      );
+      res.status(201).json({
+        success: true,
+        message: "User registered successfully",
+        data:  data ,
+        access_token: token
+      });
     });
 
     // User Login
-    app.post('/api/v1/login', async (req, res) => {
-        const { email, password } = req.body;
+    app.post("/api/v1/login", async (req, res) => {
+      const { email, password } = req.body;
 
-        // Find user by email
-        const user = await userCollection.findOne({ email });
-        if (!user) {
-            return res.status(401).json({ message: 'Invalid email or password' });
-        }
+      // Find user by email
+      const user = await userCollection.findOne({ email });
+      if (!user) {
+        return res.status(401).json({ message: "Invalid email or password" });
+      }
 
-        // Compare hashed password
-        const isPasswordValid = await bcrypt.compare(password, user.password);
-        if (!isPasswordValid) {
-            return res.status(401).json({ message: 'Invalid email or password' });
-        }
+      // Compare hashed password
+      const isPasswordValid = await bcrypt.compare(password, user.password);
+      if (!isPasswordValid) {
+        return res.status(401).json({ message: "Invalid email or password" });
+      }
 
-        // Generate JWT token
-        const token = jwt.sign({ email: user.email }, process.env.JWT_SECRET, { expiresIn: process.env.EXPIRES_IN });
+      // Generate JWT token
+      const token = jwt.sign(
+        { email: user.email, role: user.role },
+        process.env.JWT_SECRET,
+        { expiresIn: process.env.EXPIRES_IN }
+      );
 
-        res.json({
-            success: true,
-            message: 'Login successful',
-            token
-        });
+      res.json({
+        success: true,
+        message: "Login successful",
+        token,
+      });
     });
 
     // ==============================================================
